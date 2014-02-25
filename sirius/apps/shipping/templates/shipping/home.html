@@ -3,6 +3,7 @@
 <head>
   <style>
     label{width:100px;display:inline-block}
+    input{width:100px}
     div#output{border:solid 1px #000; background-color:#cfcfcf; font-family:monospace; padding:20px}
     div.left{width:40%;float:left}
     div.right{width:40%;float:right}
@@ -13,15 +14,11 @@
 <body>
 <div id="form-div" class="left">
   <form id="order-info">
-    <div>
+    <div class="left">
       <p>
         <label for="zipcode">Zipcode:</label><input type="number" name="zipcode" id="zipcode" required/>
       </p>
-    </div>
 
-    <div class="clear">&nbsp;</div>
-
-    <div class="left">
       <p>
         <label for="sku1">SKU 1:</label><input type="text" name="sku1" id="sku1" required/><br/>
         <label for="weight1">Weight 1:</label><input type="number" name="weight1" id="weight1" required/><br/>
@@ -67,6 +64,10 @@
 
     <div class="right">
       <p>
+        <input type="submit" name="submit" id="submit" value="Submit" style="width:200px;height:80px" />
+      </p>
+
+      <p>
         <label for="sku8">SKU 8:</label><input type="text" name="sku8" id="sku8"/><br/>
         <label for="weight8">Weight 8:</label><input type="number" name="weight8" id="weight8"/><br/>
         <label for="qty8">Qty 8:</label><input type="number" name="qty8" id="qty8" placeholder="optional"/><br/>
@@ -110,12 +111,6 @@
     </div>
 
     <div class="clear">&nbsp;</div>
-
-    <div>
-      <p>
-        <input type="submit" name="submit" id="submit" value="Submit" />
-      </p>
-    </div>
   </form>
 </div>
 
