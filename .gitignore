@@ -1,0 +1,9 @@
+# Python bytecode:
+*.py[cod]
+
+# Editor temp files:
+*.swp
+*~
+
+# SQLite3 database files:
+*.db
