@@ -1,7 +1,8 @@
 from functools import wraps
 
 from models import Item, Box, Order
-from price_matrices import get_box_price, get_box_price_irregular
+from ups_ground.pricing import get_price as get_price_ups_ground
+from ups_mi.pricing import get_price as get_price_ups_mi
 
 
 LABOR_COST = 0.08
@@ -22,13 +23,13 @@ def error2dict(f):
         try:
             return f(*args, **kwargs)
         except Exception, e:
-            return {'error': e.message}
+            return {'error': str(e)}
     return wrapper
 
 
 def partitions(items):
     """
-    produces a generator that contains a full combination of the input items
+    a generator that contains a full combination of the input items
 
     @arg items  : an iterable structure
     @generates  : an iterable structure containing partitioned sets of the list
@@ -46,6 +47,40 @@ def partitions(items):
 
 
 @error2dict
+def get_regular_box_price(zipcode, weight):
+    """
+    finds the cheapest option for all shipping methods
+    """
+    opts = []
+    try:
+        opt = (get_price_ups_ground(zipcode, weight), 'UPS Ground')
+        opts.append(opt)
+    except Exception:
+        raise
+    if weight <= 160:  # ups mi maxes out at 10 lbs / 160 oz
+        try:
+            opt = (get_price_ups_mi(zipcode, weight), 'UPS Mail Innovations')
+            opts.append(opt)
+        except Exception, e:
+            pass
+    return min(opts, key=lambda o: o[0])
+
+
+@error2dict
+def get_irregular_box_price(zipcode, weight):
+    """
+    finds the cheapest option for shipping methods that can handle irregular boxes
+    """
+    opts = []
+    try:
+        opt = (get_price_ups_ground(zipcode, weight), 'UPS Ground')
+        opts.append(opt)
+    except Exception:
+        raise
+    return min(opts, key=lambda o: o[0])
+
+
+@error2dict
 def shipping_optimization(order):
     """
     finds the cheapest means of shipping an order
@@ -57,30 +92,60 @@ def shipping_optimization(order):
     """
     # pull zipcode
     zipcode = str(order['zip'])
-    assert len(zipcode) >= 5
+    try:
+        assert len(zipcode) >= 5
+    except AssertionError:
+        raise Exception("zipcode '%s' is not a valid -- must be 5 digits in length" % zipcode)
 
     # pull items
     items = order['items']
-    assert isinstance(items, (list, tuple))
+    try:
+        assert isinstance(items, (list, tuple))
+    except AssertionError:
+        raise Exception("items is not an iterable structure / array")
+
+    # assert well formed items
+    for item in items:
+        # uid
+        try:
+            assert len(str(item['uid'])) > 0
+        except (KeyError, AssertionError):
+            raise Exception("malformed item - uid missing: '%s'" % str(item))
+
+        # weight
+        try:
+            assert item['weight'] > 0
+            assert item['weight'] <= 2400
+        except KeyError:
+            raise Exception("malformed item - weight missing: '%s'" % str(item))
+        except (ValueError, AssertionError):
+            raise Exception("malformed item - weight must be a positive number and less than 2400 oz: '%s'" % str(item))
+
+        # qty
+        if 'qty' in item:
+            try:
+                assert item['qty'] > 0
+            except (ValueError, AssertionError):
+                raise Exception("malformed item - if qty is used it must be > 0: '%s'" % str(item))
 
     # short out system in # of items > 9 -- force ground in 1 box
     num_items = 0
     for item in items:
         if 'qty' in item:
-            num_items += int(item['qty'])
+            num_items += item['qty']
         else:
             num_items += 1
     if num_items > 9:
         shorted = Box()
         for item in items:
             try:
-                qty = int(item['qty'])
+                qty = item['qty']
                 del item['qty']
-            except (KeyError, ValueError):
+            except KeyError:
                 qty = 1
-            for _ in range(qty):
+            for _ in xrange(qty):
                 shorted.items.append(Item(**item))
-        shorted.shipping_cost, shorted.shipping_method = get_box_price_irregular(zipcode, shorted.weight)
+        shorted.shipping_cost, shorted.shipping_method = get_irregular_box_price(zipcode, shorted.weight)
         order = Order()
         order.boxes.append(shorted)
         return order
@@ -89,34 +154,10 @@ def shipping_optimization(order):
     regular_items = []
     irregular_items = []
     for item in items:
-        # determine quantity and weight
-        if 'qty' in item:
-            if int(item['qty']) <= 0:
-                raise Exception("qty<=0 -- illegal value")
         try:
-            assert 'uid' in item
-        except:
-            raise Exception("missing uid in item")
-
-        try:
-            assert 'weight' in item
-        except:
-            raise Exception("missing weight in item")
-
-        try:
-            assert int(item['weight']) > 0
-        except:
-            raise Exception("weight<=0 -- illegal value")
-
-        try:
-            assert int(item['weight']) <= 2400  # max weight of 150 for ups
-        except:
-            raise Exception("weight>2400 -- illegal value")
-
-        try:
-            qty = int(item['qty'])
+            qty = item['qty']
             del item['qty']
-        except (KeyError, ValueError):
+        except KeyError:
             qty = 1
 
         # loop over quantity to create Item objects
@@ -134,7 +175,7 @@ def shipping_optimization(order):
     for item in irregular_items:
         box = Box()
         box.items.append(item)
-        box.shipping_cost, box.shipping_method = get_box_price_irregular(zipcode, box.weight)
+        box.shipping_cost, box.shipping_method = get_irregular_box_price(zipcode, box.weight)
         box.shipping_cost += LABOR_COST + PACKAGING_COST
         irregular_boxes.append(box)
 
@@ -145,7 +186,7 @@ def shipping_optimization(order):
         for partition in combination:
             box = Box()
             box.items.extend(partition)
-            box.shipping_cost, box.shipping_method = get_box_price(zipcode, box.weight)
+            box.shipping_cost, box.shipping_method = get_regular_box_price(zipcode, box.weight)
             box.shipping_cost += LABOR_COST + PACKAGING_COST
             order.boxes.append(box)
         orders.append(order)
