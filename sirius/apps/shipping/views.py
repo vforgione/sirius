@@ -1,4 +1,5 @@
 import json
+from math import ceil
 
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
@@ -22,8 +23,8 @@ def home(request):
             if len(request.GET[key_uid]):
                 payload['items'].append({
                     'uid': request.GET[key_uid],
-                    'weight': int(request.GET[key_weight]),
-                    'qty': request.GET[key_qty] or 1
+                    'weight': int(ceil(float(request.GET[key_weight]))),
+                    'qty': int(request.GET[key_qty]) or 1
                 })
         cheapest = shipping_optimization(payload)
         if not isinstance(cheapest, Order):
