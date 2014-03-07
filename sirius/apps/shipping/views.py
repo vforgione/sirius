@@ -49,7 +49,7 @@ def optimize(request):
             data = json.loads(request.body)
         except Exception, e:
             return HttpResponse(
-                content=json.dumps({'error': e}),
+                content=json.dumps({'error': str(e)}),
                 content_type='application/json',
                 status=400
             )
