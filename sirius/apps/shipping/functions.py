@@ -96,7 +96,7 @@ def shipping_optimization(order):
     try:
         assert re.match(r'\d{5}', zipcode)
     except AssertionError:
-        raise Exception("zipcode '%s' is not a valid" % zipcode)
+        raise Exception("zipcode '%s' is not a valid zipcode" % zipcode)
 
     # pull items
     items = order['items']
