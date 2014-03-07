@@ -1,4 +1,5 @@
 from functools import wraps
+import re
 
 from models import Item, Box, Order
 from ups_ground.pricing import get_price as get_price_ups_ground
@@ -93,9 +94,9 @@ def shipping_optimization(order):
     # pull zipcode
     zipcode = str(order['zip'])
     try:
-        assert len(zipcode) >= 5
+        assert re.match(r'\d{5}', zipcode)
     except AssertionError:
-        raise Exception("zipcode '%s' is not a valid -- must be 5 digits in length" % zipcode)
+        raise Exception("zipcode '%s' is not a valid" % zipcode)
 
     # pull items
     items = order['items']
