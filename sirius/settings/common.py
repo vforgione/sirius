@@ -80,6 +80,10 @@ STATIC_ROOT = normpath(join(DJANGO_ROOT, 'static'))
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = (
+    normpath(join(DJANGO_ROOT, 'apps', 'shipping', 'static')),
+)
 ########## END STATIC FILE CONFIGURATION
 
 
