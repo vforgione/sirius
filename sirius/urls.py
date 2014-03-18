@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls import patterns, url
 
 
@@ -9,3 +10,8 @@ urlpatterns = patterns(
     url(r'^optimize_shipping/', 'optimize'),
     url(r'^', 'home'),
 )
+
+if not settings.DEBUG:
+    urlpatterns += patterns('',
+        (r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_ROOT}),
+    )
