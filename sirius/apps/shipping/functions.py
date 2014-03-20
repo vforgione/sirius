@@ -92,11 +92,26 @@ def shipping_optimization(order):
                 : Exception (generic with custom messages)
     """
     # pull zipcode
-    zipcode = str(order['zip'])
+    zipcode = str(order['zip'])[:5]
     try:
         assert re.match(r'\d{5}', zipcode)
     except AssertionError:
-        raise Exception("zipcode '%s' is not a valid zipcode" % zipcode)
+        bad_zip = Order()
+        box = Box()
+        for item in order['items']:
+            # box.items.append(Item(**item))
+            if 'qty' in item:
+                qty = int(item['qty'])
+                del item['qty']
+                for _ in range(qty):
+                    print item
+                    box.items.append(Item(**item))
+            else:
+                box.items.append(Item(**item))
+        box.shipping_cost = 0
+        box.shipping_method = 'UPS Mail Innovations'
+        bad_zip.boxes.append(box)
+        return bad_zip
 
     # pull items
     items = order['items']

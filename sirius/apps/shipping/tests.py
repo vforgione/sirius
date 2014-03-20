@@ -1129,6 +1129,28 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(len(response.boxes), 1)
         self.assertEqual(response.boxes[0].shipping_method, 'UPS Ground')
 
+    def test_bad_zipcodes(self):
+        input_data = {"zip": "123", "items": [{"uid": "bully sticks", "weight": 4}]}
+        response = shipping_optimization(input_data)
+        self.assertIsInstance(response, Order)
+        self.assertEqual(response.shipping_cost, 0)
+        self.assertEqual(len(response.boxes), 1)
+        input_data = {"zip": "123-9", "items": [{"uid": "bully sticks", "weight": 4}]}
+        response = shipping_optimization(input_data)
+        self.assertIsInstance(response, Order)
+        self.assertEqual(response.shipping_cost, 0)
+        self.assertEqual(len(response.boxes), 1)
+        input_data = {"zip": "", "items": [{"uid": "bully sticks", "weight": 4}]}
+        response = shipping_optimization(input_data)
+        self.assertIsInstance(response, Order)
+        self.assertEqual(response.shipping_cost, 0)
+        self.assertEqual(len(response.boxes), 1)
+        input_data = {"zip": "xxxxx", "items": [{"uid": "bully sticks", "weight": 4}]}
+        response = shipping_optimization(input_data)
+        self.assertIsInstance(response, Order)
+        self.assertEqual(response.shipping_cost, 0)
+        self.assertEqual(len(response.boxes), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
