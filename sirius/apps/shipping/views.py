@@ -21,10 +21,11 @@ def home(request):
             key_weight = 'weight%d' % i
             key_qty = 'qty%d' % i
             if len(request.GET[key_uid]):
+                qty = request.GET[key_qty] or 1
                 payload['items'].append({
                     'uid': request.GET[key_uid],
                     'weight': int(ceil(float(request.GET[key_weight]))),
-                    'qty': int(request.GET[key_qty]) or 1
+                    'qty': int(qty)
                 })
         cheapest = shipping_optimization(payload)
         if not isinstance(cheapest, Order):
