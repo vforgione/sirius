@@ -1151,6 +1151,17 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(response.shipping_cost, 0)
         self.assertEqual(len(response.boxes), 1)
 
+    def test_apo_zipcode(self):
+        input_data = {"zip": "09021", "items": [{"uid": "bully sticks", "weight": 12}]}
+        response = shipping_optimization(input_data)
+        self.assertIsInstance(response, Order)
+        input_data = {"zip": "09021", "items": [{"uid": "bully sticks", "weight": 12, "qty": 1}]}
+        response = shipping_optimization(input_data)
+        self.assertIsInstance(response, Order)
+        input_data = {"zip": "09021", "items": [{"uid": "bully sticks", "weight": 12, "qty": 3}]}
+        response = shipping_optimization(input_data)
+        self.assertIsInstance(response, Order)
+
 
 if __name__ == '__main__':
     unittest.main()
