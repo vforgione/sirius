@@ -57,14 +57,17 @@ def get_regular_box_price(zipcode, weight):
         opt = (get_price_ups_ground(zipcode, weight), 'UPS Ground')
         opts.append(opt)
     except Exception:
-        raise
+        pass
     if weight <= 160:  # ups mi maxes out at 10 lbs / 160 oz
         try:
             opt = (get_price_ups_mi(zipcode, weight), 'UPS Mail Innovations')
             opts.append(opt)
         except Exception, e:
             pass
-    return min(opts, key=lambda o: o[0])
+    try:
+        return min(opts, key=lambda o: o[0])
+    except ValueError:
+        return get_irregular_box_price(zipcode, weight)
 
 
 @error2dict
